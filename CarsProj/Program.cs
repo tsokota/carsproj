@@ -19,6 +19,7 @@ namespace CarsProj
     class Manufacturer
     {
         public int test = 6;
+        public int test3 = 666;
         private const byte maxCars = 10;
         private byte totalNumCars = 0;
 

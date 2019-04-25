@@ -164,9 +164,37 @@ namespace CarsProj
 
         public void WipersOn() => Wipers = true;
         public void WipersOff() => Wipers = false;
-
     }
 
+    class Volvo : Car
+    {
+        public bool AutoPilot { get; private set; }
+
+        public Volvo(Models model, int maxSpeed, int minSpeed, string name, string number)
+        {
+            base.Id = ++_totalId;
+            MaxSpeed = maxSpeed;
+            Name = name;
+            Number = number;
+            Model = model;
+        }
+
+        public override void SpeedUpWithTime(int sec)
+        {
+            TotalSpeed = (int)(TotalSpeed * 0.09 * sec);
+            if (TotalSpeed > MaxSpeed) throw new SpeedLimitExceeded("Speed limit exceeded!", this);
+        }
+
+        public override void SpeedDownWithTime(int sec)
+        {
+            TotalSpeed = (int)(TotalSpeed * 0.09 * sec);
+            if (TotalSpeed < MinSpeed) throw new SpeedLimitExceeded("Speed limit violated!", this);
+        }
+
+        public void AutoPilotOn() => AutoPilot = true;
+        public void AutoPilotff() => AutoPilot = false;
+
+    }
 
     class CarController
     {

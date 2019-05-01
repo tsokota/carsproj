@@ -47,12 +47,12 @@ namespace CarsProj
             _country = country;
         }
 
-        public Nissan CreateNewCar(Models model, int maxSpeed, int minSpeed, string name, string number)
+        public Lorry CreateNewCar(Models model, int maxSpeed, int minSpeed, string name, string number)
         {
             if (totalNumCars == 10)
                 throw new CarManufacturerLimitExceeded("Car limit exceeded!");
             ++totalNumCars;
-            var car = new Nissan(model, maxSpeed, minSpeed, name, number);
+            var car = new Lorry(model, maxSpeed, minSpeed, name, number);
             _cars.Add(car); 
             return car;
         }
@@ -137,11 +137,12 @@ namespace CarsProj
         }
     }
 
-    class Nissan : Car
+    class Lorry : Car
     {
-        public bool Wipers { get; private set; }
+        public bool DrawTrailer { get; private set; }
+        private int DegreeOfDischarge { get; set; } = 0;
 
-        public Nissan(Models model, int maxSpeed, int minSpeed, string name, string number) 
+        public Lorry(Models model, int maxSpeed, int minSpeed, string name, string number) 
         {
             base.Id = ++_totalId;
             MaxSpeed = maxSpeed;
@@ -152,49 +153,33 @@ namespace CarsProj
 
         public override void SpeedUpWithTime(int sec)
         {
-            TotalSpeed = (int)(TotalSpeed * 0.03 * sec);
+            TotalSpeed = (int)(TotalSpeed * 0.01 * sec);
             if (TotalSpeed > MaxSpeed) throw new SpeedLimitExceeded("Speed limit exceeded!", this);
         }
 
         public override void SpeedDownWithTime(int sec)
         {
-            TotalSpeed = (int)(TotalSpeed * 0.03 * sec);
+            TotalSpeed = (int)(TotalSpeed * 0.01 * sec);
             if (TotalSpeed < MinSpeed) throw new SpeedLimitExceeded("Speed limit violated!", this);
         }
 
-        public void WipersOn() => Wipers = true;
-        public void WipersOff() => Wipers = false;
+        public void WipersOn() => DrawTrailer = true;
+        public void WipersOff() => DrawTrailer = false;
+
+        public void DischargeOn()
+        {
+            DegreeOfDischarge = DegreeOfDischarge+=5;
+            if (TotalSpeed > 100) throw new SpeedLimitExceeded("Discharge limit exceeded!", this);
+        }
+
+        public void DischargeOff(int sec)
+        {
+            DegreeOfDischarge = DegreeOfDischarge -= 5;
+            if (DegreeOfDischarge < 0) throw new SpeedLimitExceeded("Discharge limit violated!", this);
+        }
     }
 
-    class Volvo : Car
-    {
-        public bool AutoPilot { get; private set; }
-
-        public Volvo(Models model, int maxSpeed, int minSpeed, string name, string number)
-        {
-            base.Id = ++_totalId;
-            MaxSpeed = maxSpeed;
-            Name = name;
-            Number = number;
-            Model = model;
-        }
-
-        public override void SpeedUpWithTime(int sec)
-        {
-            TotalSpeed = (int)(TotalSpeed * 0.09 * sec);
-            if (TotalSpeed > MaxSpeed) throw new SpeedLimitExceeded("Speed limit exceeded!", this);
-        }
-
-        public override void SpeedDownWithTime(int sec)
-        {
-            TotalSpeed = (int)(TotalSpeed * 0.09 * sec);
-            if (TotalSpeed < MinSpeed) throw new SpeedLimitExceeded("Speed limit violated!", this);
-        }
-
-        public void AutoPilotOn() => AutoPilot = true;
-        public void AutoPilotff() => AutoPilot = false;
-
-    }
+  
 
     class CarController
     {
@@ -248,8 +233,8 @@ namespace CarsProj
         private static int _totalId = 0;
         public int Id { get; }
 
-        private List<Nissan> _cars = new List<Nissan>();
-        public List<Nissan> Cars => _cars;
+        private List<Car> _cars = new List<Car>();
+        public List<Car> Cars => _cars;
 
         private string _name;
         public string Name

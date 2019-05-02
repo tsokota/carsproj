@@ -47,30 +47,40 @@ namespace CarsProj
             _country = country;
         }
 
-        public Lorry CreateNewCar(Models model, int maxSpeed, int minSpeed, string name, string number)
+        public Car CreateNewCar(Models model, int maxSpeed, int minSpeed, string name, string number)
+        {
+            if (totalNumCars == 10)
+                throw new CarManufacturerLimitExceeded("Car limit exceeded!");
+            ++totalNumCars;
+            var car = new Car(model, maxSpeed, minSpeed, name, number);
+            _cars.Add(car);
+            return car;
+        }
+
+        public Lorry CreateNewLorry(Models model, int maxSpeed, int minSpeed, string name, string number)
         {
             if (totalNumCars == 10)
                 throw new CarManufacturerLimitExceeded("Car limit exceeded!");
             ++totalNumCars;
             var car = new Lorry(model, maxSpeed, minSpeed, name, number);
-            _cars.Add(car); 
+            _cars.Add(car);
             return car;
         }
 
         public void DeleteCarById(int id) => _cars.Remove(_cars.First(c => c.Id == id));
     }
 
-    
 
 
-    abstract class Car
+
+    class Car
     {
         protected static int _totalId = 0;
 
         public int MaxSpeed { get; protected set; }
         public int MinSpeed { get; protected set; }
 
-        public  Models Model { get; protected set; }
+        public Models Model { get; protected set; }
 
         public int Id { get; protected set; }
 
@@ -93,33 +103,33 @@ namespace CarsProj
             set => _number = string.IsNullOrEmpty(value) ? "Default" : value;
         }
 
-      /*  public Car(Models model, int maxSpeed, int minSpeed, string name, string number)
+        public Car(Models model, int maxSpeed, int minSpeed, string name, string number)
         {
             Id = ++_totalId;
             MaxSpeed = maxSpeed;
             _name = name;
             _number = number;
             Model = model;
-        } */
+        }
 
         public virtual void Bip() => Console.WriteLine("Bip-Bip");
 
         public virtual void SpeedUpWithTime(int sec)
         {
             TotalSpeed = (int)(TotalSpeed * 0.015 * sec);
-            if(TotalSpeed> MaxSpeed) throw new SpeedLimitExceeded("Speed limit exceeded!", this);
-        } 
+            if (TotalSpeed > MaxSpeed) throw new SpeedLimitExceeded("Speed limit exceeded!", this);
+        }
 
         public virtual void SpeedDownWithTime(int sec)
         {
-            TotalSpeed = (int)(TotalSpeed * 0.015*sec);
+            TotalSpeed = (int)(TotalSpeed * 0.015 * sec);
             if (TotalSpeed < MinSpeed) throw new SpeedLimitExceeded("Speed limit violated!", this);
         }
 
         public void Brake()
         {
-            int step =(int)(TotalSpeed*0.015);
-            for(int i=0;i<10;i++)
+            int step = (int)(TotalSpeed * 0.015);
+            for (int i = 0; i < 10; i++)
             {
                 // здесь задержка
                 TotalSpeed -= step;
@@ -132,7 +142,7 @@ namespace CarsProj
             for (int i = 0; i < 10; i++)
             {
                 // здесь задержка
-                TotalSpeed += step ;
+                TotalSpeed += step;
             }
         }
     }
@@ -140,16 +150,10 @@ namespace CarsProj
     class Lorry : Car
     {
         public bool DrawTrailer { get; private set; }
-        private int DegreeOfDischarge { get; set; } = 0;
+        public int DegreeOfDischarge { get; set; } = 0;
 
-        public Lorry(Models model, int maxSpeed, int minSpeed, string name, string number) 
-        {
-            base.Id = ++_totalId;
-            MaxSpeed = maxSpeed;
-            Name = name;
-            Number = number;
-            Model = model;
-        }
+        public Lorry(Models model, int maxSpeed, int minSpeed, string name, string number) : base(model, maxSpeed, minSpeed, name, number)
+        { }
 
         public override void SpeedUpWithTime(int sec)
         {
@@ -168,18 +172,17 @@ namespace CarsProj
 
         public void DischargeOn()
         {
-            DegreeOfDischarge = DegreeOfDischarge+=5;
+            DegreeOfDischarge = DegreeOfDischarge += 5;
             if (TotalSpeed > 100) throw new SpeedLimitExceeded("Discharge limit exceeded!", this);
         }
 
-        public void DischargeOff(int sec)
+        public void DischargeOff()
         {
             DegreeOfDischarge = DegreeOfDischarge -= 5;
             if (DegreeOfDischarge < 0) throw new SpeedLimitExceeded("Discharge limit violated!", this);
         }
     }
 
-  
 
     class CarController
     {
@@ -196,9 +199,9 @@ namespace CarsProj
             {
                 Car.SpeedUpWithTime(sec);
             }
-            catch(SpeedLimitExceeded ex)
+            catch (SpeedLimitExceeded ex)
             {
-                Console.WriteLine( ex.Message);
+                Console.WriteLine(ex.Message);
                 ex.Car.Brake();
             }
             finally
@@ -226,6 +229,57 @@ namespace CarsProj
         }
 
         public void Bip() => Car.Bip();
+    }
+
+    class LorryController : CarController
+    {
+
+        public LorryController(Lorry car): base(car)
+        { }
+
+        public void DischargeOn()
+        {
+            try
+            {
+                (Car as Lorry).DischargeOn();
+            }
+            catch (SpeedLimitExceeded ex)
+            {
+                Console.WriteLine(ex.Message);
+                (ex.Car as Lorry).DischargeOff();
+            }
+            finally
+            {
+                Console.WriteLine("Current state of discharge: " + (Car as Lorry).DegreeOfDischarge);
+            }
+        }
+
+        public void DischargeOff()
+        {
+            try
+            {
+                (Car as Lorry).DischargeOff();
+            }
+            catch (SpeedLimitExceeded ex)
+            {
+                Console.WriteLine(ex.Message);
+                (ex.Car as Lorry).DischargeOn();
+            }
+            finally
+            {
+                Console.WriteLine("Current state of discharge: " + (Car as Lorry).DegreeOfDischarge);
+            }
+        }
+
+        public void WipersOn()
+        {
+            (Car as Lorry).WipersOn();
+        }
+
+        public void WipersOff()
+        {
+            (Car as Lorry).WipersOff();
+        }
     }
 
     class User
@@ -256,7 +310,21 @@ namespace CarsProj
             {
                 var car = manuf.CreateNewCar(model, maxSpeed, minSpeed, name, number);
                 _cars.Add(car);
-                _carController  = new CarController(car);
+                _carController = new CarController(car);
+            }
+            catch (CarManufacturerLimitExceeded e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        public void AddNewLorryByManufacturer(Manufacturer manuf, Models model, int maxSpeed, int minSpeed, string name, string number)
+        {
+            try
+            {
+                var car = manuf.CreateNewLorry(model, maxSpeed, minSpeed, name, number);
+                _cars.Add(car);
+                _carController = new CarController(car);
             }
             catch (CarManufacturerLimitExceeded e)
             {
@@ -284,7 +352,7 @@ namespace CarsProj
         public SpeedLimitExceeded(string message, Car car)
             : base(message)
         {
-            Car=car;
+            Car = car;
         }
     }
 
@@ -295,6 +363,8 @@ namespace CarsProj
         X1,
         X2,
         Z4,
-        I8
+        I8,
+        K9,
+        IZCH
     }
 }

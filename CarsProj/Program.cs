@@ -70,9 +70,6 @@ namespace CarsProj
         public void DeleteCarById(int id) => _cars.Remove(_cars.First(c => c.Id == id));
     }
 
-
-
-
     class Car
     {
         protected static int _totalId = 0;
@@ -93,7 +90,6 @@ namespace CarsProj
         {
             get => _name;
             set => _name = string.IsNullOrEmpty(value) ? "Default" : value;
-
         }
 
         private string _number;
@@ -183,7 +179,6 @@ namespace CarsProj
         }
     }
 
-
     class CarController
     {
         public Car Car;
@@ -210,7 +205,6 @@ namespace CarsProj
             }
         }
 
-
         public void SpeedDownWithTime(int sec)
         {
             try
@@ -233,7 +227,6 @@ namespace CarsProj
 
     class LorryController : CarController
     {
-
         public LorryController(Lorry car): base(car)
         { }
 
@@ -324,7 +317,7 @@ namespace CarsProj
             {
                 var car = manuf.CreateNewLorry(model, maxSpeed, minSpeed, name, number);
                 _cars.Add(car);
-                _carController = new CarController(car);
+                _carController = new LorryController(car);
             }
             catch (CarManufacturerLimitExceeded e)
             {
@@ -337,6 +330,13 @@ namespace CarsProj
         public void DownSpeed(int sec) => _carController.SpeedDownWithTime(sec);
 
         public void Bip() => _carController.Bip();
+
+        // only for lorry
+        public void WipersOn() => (_carController as LorryController).WipersOn();
+
+        public void WipersOff() => (_carController as LorryController).WipersOff();
+
+        public void CarcassDown() => (_carController as LorryController).DischargeOff();
     }
 
     class CarManufacturerLimitExceeded : Exception
